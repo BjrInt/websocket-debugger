@@ -8,9 +8,13 @@ export const socketOpenedAt = writable(null)
 
 export const msgFeed = writable([])
 
+export const awaitQueue = writable([])
+
 export const messagesTo = writable([])
 
 export const socket = writable(null)
+
+export const isSocketPaused = writable(false)
 
 export const toggleMessageVisibility = i => {
     msgFeed.update(msgs => {
@@ -33,7 +37,6 @@ export const openWebSocket = () => {
         })
 
         ws.addEventListener('close', () => {
-            console.log('closed')
             isSocketOpen.set(false)
             document.title = 'Websocket UI'
         })
@@ -48,12 +51,34 @@ export const openWebSocket = () => {
                 message = data
             }
 
-            msgFeed.update(list => { list.unshift({
+            let isPaused
+            isSocketPaused.update(x => isPaused = x)
+
+            const toPush = {
                 message, timeStamp, _showMsg: false
-            }); return list })
+            }
+
+            if(isPaused){
+                awaitQueue.update(list => { list.unshift(toPush); return list })
+            }
+            else {
+                msgFeed.update(list => { list.unshift(toPush); return list })
+            }
         })
     })
     socket.set(ws)
+}
+
+export const mergeQueues = () => {
+    let queueToPush
+    awaitQueue.subscribe(x => queueToPush = x)
+    msgFeed.update(list => (
+        [
+            ...queueToPush,
+            ...list
+        ]
+    ))
+    awaitQueue.set([])
 }
 
 export const closeWebSocket = () => {

@@ -1,21 +1,27 @@
 <script>
-  import { wsURL, isSocketOpen, openWebSocket, closeWebSocket } from "../store";
+  import { wsURL, isSocketOpen, openWebSocket, closeWebSocket, isSocketPaused, mergeQueues } from "../store";
 
-  let socketOpened;
-
-  isSocketOpen.subscribe((x) => (socketOpened = x));
+  const togglePause = () => {
+    isSocketPaused.update(v => !v)
+    mergeQueues()
+  }
 </script>
 
 <section class="socket-status">
   <div class="status-wrapper">
-    <div class={socketOpened ? "pill opened" : "pill"}>
-      {socketOpened ? "open" : "closed"}
+    <div class={$isSocketOpen ? "pill opened" : "pill"}>
+      {$isSocketOpen ? "open" : "closed"}
     </div>
   </div>
   <div class="input-wrapper">
-    <input type="text" bind:value={$wsURL} disabled={socketOpened} />
-    {#if socketOpened}
+    <input type="text" bind:value={$wsURL} disabled={$isSocketOpen} />
+    {#if $isSocketOpen}
       <button on:click={closeWebSocket}>Close</button>
+      {#if $isSocketPaused}
+      <button on:click={togglePause}>Resume</button>
+      {:else}
+      <button on:click={togglePause}>Pause</button>
+      {/if}
     {:else}
       <button on:click={openWebSocket}>Open</button>
     {/if}
@@ -53,7 +59,7 @@
   }
 
   .input-wrapper input {
-    width: calc(90% - 30px);
+    width: calc(80% - 60px);
     margin-right: 20px;
     padding: 10px;
     font-size: 15px;

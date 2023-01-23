@@ -1,12 +1,15 @@
 <script>
   import { JsonView } from "@zerodevx/svelte-json-view";
-  import { msgFeed, toggleMessageVisibility } from "../store";
+  import { awaitQueue, msgFeed, toggleMessageVisibility } from "../store";
 
   let feed = [];
   msgFeed.subscribe((msgs) => (feed = msgs));
 </script>
 
 <section class="socket-response">
+  <div class="message-counter">
+    {$msgFeed.length} messages ({$awaitQueue.length} awaiting)
+  </div>
   {#each feed as msg, i}
     <div class="message-wrapper">
       <div class="message-header" on:click={() => toggleMessageVisibility(i)}>
@@ -24,6 +27,10 @@
 </section>
 
 <style>
+  .message-counter{
+    padding: 15px;
+  }
+
   .message-wrapper {
     padding: 25px;
     margin: 15px;
